@@ -3,8 +3,12 @@ syntax = "proto3";
 package user;
 
 service User {
+    // Unary RPC
     rpc getUser(UserRequest) returns (UserResponse) {}
-    rpc getUserStream (UserStreamRequest) returns (stream UserStreamResponse);
+    // Server streaming RPC
+    rpc getUserStream (UserStreamRequest) returns (stream UserStreamResponse) {}
+    // Client streaming RPC
+    rpc addUsersStream (stream AddUsersRequest) returns (AddUsersResponse) {}
 }
 
 message UserRequest {
@@ -27,4 +31,13 @@ message UserDetails {
     int32 id = 1;
     string email = 2;
     string name = 3;
+}
+
+message AddUsersRequest {
+    string email = 1;
+    string name = 2;
+}
+
+message AddUsersResponse {
+    repeated UserDetails users = 1;
 }
