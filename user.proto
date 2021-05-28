@@ -6,9 +6,11 @@ service User {
     // Unary RPC
     rpc getUser(UserRequest) returns (UserResponse) {}
     // Server streaming RPC
-    rpc getUserStream (UserStreamRequest) returns (stream UserStreamResponse) {}
+    rpc getUserStream(UserStreamRequest) returns (stream UserStreamResponse) {}
     // Client streaming RPC
-    rpc addUsersStream (stream AddUsersRequest) returns (AddUsersResponse) {}
+    rpc addUsersStream(stream AddUsersRequest) returns (AddUsersResponse) {}
+    // Bidirectional streaming RPC
+    rpc chat(stream ChatMessage) returns (stream ChatMessage) {}
 }
 
 message UserRequest {
@@ -40,4 +42,8 @@ message AddUsersRequest {
 
 message AddUsersResponse {
     repeated UserDetails users = 1;
+}
+
+message ChatMessage {
+    string message = 1;
 }

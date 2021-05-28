@@ -1,9 +1,8 @@
-const PROTO_PATH = __dirname + "/user.proto";
 const {users} = require("./data");
 
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
-const packageDef = protoLoader.loadSync(PROTO_PATH, {
+const packageDef = protoLoader.loadSync("./user.proto", {
     keepCase: true,
     longs: String,
     enums: String,
@@ -12,6 +11,7 @@ const packageDef = protoLoader.loadSync(PROTO_PATH, {
 });
 
 const user_proto = grpc.loadPackageDefinition(packageDef).user;
+let clients = new Map();
 
 /**
  * Implements the getUser RPC method.
@@ -53,12 +53,34 @@ function addUsersStream(call, cb) {
 }
 
 /**
- * Starts an RPC server that receives requests for the User service at the
- * sample server port
+ * Implements the chat RPC method.
+ * Bidirectional streaming RPC
+ */
+function chat(call) {
+  call.on("data", (chatMessage) => {
+    const user = call.metadata.get("username");
+    clients.forEach((c, u) => {
+      if(u !== user) {
+        c.write({message: `${user} sent ${chatMessage.message}`});
+      }
+    });
+    if (!clients.has(user)) {
+      clients.set(user, call);
+    }
+  });
+
+  call.on("end", () => {
+    call.write({message: "Connection ended by client.."});
+    call.end();
+  });
+}
+
+/**
+ * Starts an RPC server that receives requests for the User service at the server port
  */
 function main() {
     var server = new grpc.Server();
-    server.addService(user_proto.User.service, {getUser, getUserStream, addUsersStream});
+    server.addService(user_proto.User.service, {getUser, getUserStream, addUsersStream, chat});
     server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
       server.start();
       console.log(`gRPC server has started`)
